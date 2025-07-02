@@ -4,6 +4,7 @@ import '../providers/receipt_provider.dart';
 import 'receipt_creation_screen.dart';
 import 'receipt_preview_screen.dart';
 import 'receipt_history_screen.dart';
+import '../theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -41,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentIndex = index;
           });
         },
-        selectedItemColor: Colors.black,
+        selectedItemColor: AppTheme.primaryColor,
         unselectedItemColor: Colors.grey,
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,

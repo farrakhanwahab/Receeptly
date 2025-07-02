@@ -106,24 +106,24 @@ class ReceiptStyleSelector extends StatelessWidget {
   IconData _getStyleIcon(ReceiptStyle style) {
     switch (style) {
       case ReceiptStyle.bank:
-        return Icons.account_balance;
+        return Icons.receipt_long;
       case ReceiptStyle.restaurant:
-        return Icons.restaurant;
+        return Icons.trending_up;
       case ReceiptStyle.retail:
-        return Icons.shopping_cart;
+        return Icons.list_alt;
       case ReceiptStyle.document:
-        return Icons.description;
+        return Icons.insert_drive_file;
     }
   }
 
   String _getStyleName(ReceiptStyle style) {
     switch (style) {
       case ReceiptStyle.bank:
-        return 'Bank';
+        return 'Classic';
       case ReceiptStyle.restaurant:
-        return 'Restaurant';
+        return 'Modern';
       case ReceiptStyle.retail:
-        return 'Retail';
+        return 'Simple';
       case ReceiptStyle.document:
         return 'Document';
     }
@@ -132,11 +132,11 @@ class ReceiptStyleSelector extends StatelessWidget {
   String _getStyleDescription(ReceiptStyle style) {
     switch (style) {
       case ReceiptStyle.bank:
-        return 'Clean, professional bank-style receipt';
+        return 'Classic, professional layout';
       case ReceiptStyle.restaurant:
-        return 'Casual restaurant receipt with itemized list';
+        return 'Modern, itemized layout';
       case ReceiptStyle.retail:
-        return 'Standard retail/till receipt format';
+        return 'Simple, till-style format';
       case ReceiptStyle.document:
         return 'Formal document/invoice style';
     }

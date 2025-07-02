@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
+import 'package:file_picker/file_picker.dart';
+import '../widgets/banner_message.dart';
 
 class MerchantInfoEditScreen extends StatefulWidget {
   const MerchantInfoEditScreen({super.key});
@@ -17,6 +19,8 @@ class _MerchantInfoEditScreenState extends State<MerchantInfoEditScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   late TextEditingController _notesController;
+  BannerMessageType? _bannerType;
+  String? _bannerMessage;
 
   @override
   void initState() {
@@ -39,68 +43,162 @@ class _MerchantInfoEditScreenState extends State<MerchantInfoEditScreen> {
     super.dispose();
   }
 
+  void _showBanner(String message, BannerMessageType type) {
+    setState(() {
+      _bannerMessage = message;
+      _bannerType = type;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit Merchant Info')),
-      body: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingM),
-        child: Form(
-          key: _formKey,
-          child: ListView(
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(title: Text('Edit Merchant Info', style: AppTheme.headingMedium)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: Column(
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Business Name *'),
-                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: AppTheme.spacingM),
-              TextFormField(
-                controller: _addressController,
-                decoration: const InputDecoration(labelText: 'Business Address'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: AppTheme.spacingM),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: AppTheme.spacingM),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email Address'),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: AppTheme.spacingM),
-              TextFormField(
-                controller: _notesController,
-                decoration: const InputDecoration(labelText: 'Business Notes'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: AppTheme.spacingL),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState?.validate() ?? false) {
-                      await context.read<SettingsProvider>().updateMerchantInfo(
-                        name: _nameController.text,
-                        address: _addressController.text,
-                        phone: _phoneController.text,
-                        email: _emailController.text,
-                        notes: _notesController.text,
-                      );
-                      if (mounted) Navigator.pop(context);
-                    }
-                  },
-                  child: const Text('Save'),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTheme.spacingM),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        // Logo upload button
+                        Align(
+                          alignment: Alignment.center,
+                          child: Column(
+                            children: [
+                              Consumer<SettingsProvider>(
+                                builder: (context, provider, child) {
+                                  final logoPath = provider.settings.logoPath;
+                                  return Column(
+                                    children: [
+                                      if (logoPath != null && logoPath.isNotEmpty)
+                                        CircleAvatar(
+                                          radius: 32,
+                                          backgroundImage: AssetImage(logoPath),
+                                          backgroundColor: Colors.grey[200],
+                                        ),
+                                      TextButton.icon(
+                                        onPressed: () async {
+                                          try {
+                                            FilePickerResult? result = await FilePicker.platform.pickFiles(
+                                              type: FileType.image,
+                                              allowMultiple: false,
+                                            );
+                                            if (result != null) {
+                                              await provider.updateLogoPath(result.files.single.path);
+                                              if (context.mounted) {
+                                                _showBanner('Logo uploaded successfully!', BannerMessageType.success);
+                                              }
+                                            }
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              _showBanner('Error uploading logo: $e', BannerMessageType.error);
+                                            }
+                                          }
+                                        },
+                                        icon: const Icon(Icons.upload_file),
+                                        label: Text('Upload Logo', style: AppTheme.bodyMedium),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingL),
+                        Expanded(
+                          child: ListView(
+                            children: [
+                              TextFormField(
+                                controller: _nameController,
+                                decoration: const InputDecoration(labelText: 'Business Name *'),
+                                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                              ),
+                              const SizedBox(height: AppTheme.spacingM),
+                              TextFormField(
+                                controller: _addressController,
+                                decoration: const InputDecoration(labelText: 'Business Address'),
+                                maxLines: 2,
+                              ),
+                              const SizedBox(height: AppTheme.spacingM),
+                              TextFormField(
+                                controller: _phoneController,
+                                decoration: const InputDecoration(labelText: 'Phone Number'),
+                                keyboardType: TextInputType.phone,
+                              ),
+                              const SizedBox(height: AppTheme.spacingM),
+                              TextFormField(
+                                controller: _emailController,
+                                decoration: const InputDecoration(labelText: 'Email Address'),
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                              const SizedBox(height: AppTheme.spacingM),
+                              TextFormField(
+                                controller: _notesController,
+                                decoration: const InputDecoration(labelText: 'Business Notes'),
+                                maxLines: 3,
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 24.0),
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (_formKey.currentState?.validate() ?? false) {
+                                  try {
+                                    await context.read<SettingsProvider>().updateMerchantInfo(
+                                      name: _nameController.text,
+                                      address: _addressController.text,
+                                      phone: _phoneController.text,
+                                      email: _emailController.text,
+                                      notes: _notesController.text,
+                                    );
+                                    if (mounted) {
+                                      _showBanner('Merchant info saved!', BannerMessageType.success);
+                                      Future.delayed(const Duration(seconds: 1), () {
+                                        if (mounted) Navigator.pop(context);
+                                      });
+                                    }
+                                  } catch (e) {
+                                    if (mounted) {
+                                      _showBanner('Error saving info: $e', BannerMessageType.error);
+                                    }
+                                  }
+                                }
+                              },
+                              child: const Text('Save'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-      ),
+        if (_bannerMessage != null && _bannerType != null)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: BannerMessage(
+              message: _bannerMessage!,
+              type: _bannerType!,
+              onClose: () => setState(() => _bannerMessage = null),
+            ),
+          ),
+      ],
     );
   }
 } 

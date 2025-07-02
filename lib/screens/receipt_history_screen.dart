@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 import '../providers/receipt_provider.dart';
 import '../models/receipt.dart';
 import '../theme/app_theme.dart';
-import '../widgets/receipt_preview_widget.dart';
 import '../services/export_service.dart';
+import '../screens/receipt_preview_screen.dart';
 
 class ReceiptHistoryScreen extends StatefulWidget {
   const ReceiptHistoryScreen({super.key});
@@ -15,6 +15,9 @@ class ReceiptHistoryScreen extends StatefulWidget {
 }
 
 class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
+  final Set<String> _selectedReceiptIds = <String>{};
+  bool _isSelectionMode = false;
+
   @override
   void initState() {
     super.initState();
@@ -23,12 +26,152 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
     });
   }
 
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      if (!_isSelectionMode) {
+        _selectedReceiptIds.clear();
+      }
+    });
+  }
+
+  void _toggleReceiptSelection(String receiptId) {
+    setState(() {
+      if (_selectedReceiptIds.contains(receiptId)) {
+        _selectedReceiptIds.remove(receiptId);
+      } else {
+        _selectedReceiptIds.add(receiptId);
+      }
+      if (_selectedReceiptIds.isEmpty) {
+        _isSelectionMode = false;
+      }
+    });
+  }
+
+  Future<void> _bulkExport() async {
+    if (_selectedReceiptIds.isEmpty) return;
+    
+    try {
+      final provider = context.read<ReceiptProvider>();
+      final selectedReceipts = provider.recentReceipts
+          .where((receipt) => _selectedReceiptIds.contains(receipt.id))
+          .toList();
+      
+      final exportService = ExportService();
+      for (final receipt in selectedReceipts) {
+        await exportService.exportToPDF(receipt);
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${selectedReceipts.length} receipts exported successfully!'),
+            backgroundColor: AppTheme.primaryColor,
+          ),
+        );
+        _toggleSelectionMode();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting receipts: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _bulkDelete() async {
+    if (_selectedReceiptIds.isEmpty) return;
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete ${_selectedReceiptIds.length} Receipts', style: AppTheme.headingMedium),
+        content: Text(
+          'Are you sure you want to delete ${_selectedReceiptIds.length} receipts? This action cannot be undone.',
+          style: AppTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: AppTheme.dangerButtonStyle,
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true) {
+      try {
+        final provider = context.read<ReceiptProvider>();
+        final selectedReceipts = provider.recentReceipts
+            .where((receipt) => _selectedReceiptIds.contains(receipt.id))
+            .toList();
+        
+        for (final receipt in selectedReceipts) {
+          await provider.deleteReceipt(receipt);
+        }
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${selectedReceipts.length} receipts deleted'),
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          );
+          _toggleSelectionMode();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting receipts: $e'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Receipts'),
-        iconTheme: const IconThemeData(color: Colors.black),
+        title: Text(_isSelectionMode ? '${_selectedReceiptIds.length} Selected' : 'Receipts'),
+        iconTheme: AppTheme.iconTheme,
+        actions: [
+          if (_isSelectionMode) ...[
+            IconButton(
+              icon: const Icon(Icons.file_download),
+              onPressed: _bulkExport,
+              tooltip: 'Export Selected',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _bulkDelete,
+              tooltip: 'Delete Selected',
+            ),
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: _toggleSelectionMode,
+              tooltip: 'Cancel Selection',
+            ),
+          ] else ...[
+            IconButton(
+              icon: const Icon(Icons.check_box_outline_blank),
+              onPressed: _toggleSelectionMode,
+              tooltip: 'Select Multiple',
+            ),
+          ],
+        ],
       ),
       body: Consumer<ReceiptProvider>(
         builder: (context, provider, child) {
@@ -66,10 +209,18 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
             itemCount: provider.recentReceipts.length,
             itemBuilder: (context, index) {
               final receipt = provider.recentReceipts[index];
+              final isSelected = _selectedReceiptIds.contains(receipt.id);
+              
               return Card(
                 margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(AppTheme.spacingM),
+                  leading: _isSelectionMode
+                      ? Checkbox(
+                          value: isSelected,
+                          onChanged: (value) => _toggleReceiptSelection(receipt.id),
+                        )
+                      : null,
                   title: Text(
                     receipt.merchantName,
                     style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
@@ -119,68 +270,73 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
                       ),
                     ],
                   ),
-                  trailing: PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
-                    onSelected: (value) async {
-                      switch (value) {
-                        case 'view':
-                          _showReceiptPreview(context, receipt);
-                          break;
-                        case 'edit':
-                          provider.loadReceipt(receipt);
-                          // Navigate to creation screen
-                          break;
-                        case 'share':
-                          await _shareReceipt(receipt);
-                          break;
-                        case 'delete':
-                          _showDeleteDialog(context, provider, receipt);
-                          break;
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'view',
-                        child: Row(
-                          children: [
-                            Icon(Icons.visibility),
-                            SizedBox(width: AppTheme.spacingS),
-                            Text('View'),
+                  trailing: _isSelectionMode
+                      ? null
+                      : PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert),
+                          onSelected: (value) async {
+                            switch (value) {
+                              case 'view':
+                                _showReceiptPreview(context, receipt);
+                                break;
+                              case 'edit':
+                                provider.loadReceipt(receipt);
+                                // Navigate to creation screen
+                                break;
+                              case 'share':
+                                await _shareReceipt(receipt);
+                                break;
+                              case 'delete':
+                                _showDeleteDialog(context, provider, receipt);
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'view',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.visibility),
+                                  SizedBox(width: AppTheme.spacingS),
+                                  Text('View'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit),
+                                  SizedBox(width: AppTheme.spacingS),
+                                  Text('Edit'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'share',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.share),
+                                  SizedBox(width: AppTheme.spacingS),
+                                  Text('Share'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete, color: Colors.red),
+                                  SizedBox(width: AppTheme.spacingS),
+                                  Text('Delete', style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit),
-                            SizedBox(width: AppTheme.spacingS),
-                            Text('Edit'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'share',
-                        child: Row(
-                          children: [
-                            Icon(Icons.share),
-                            SizedBox(width: AppTheme.spacingS),
-                            Text('Share'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, color: Colors.red),
-                            SizedBox(width: AppTheme.spacingS),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  onTap: _isSelectionMode
+                      ? () => _toggleReceiptSelection(receipt.id)
+                      : null,
                 ),
               );
             },
@@ -191,46 +347,22 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
   }
 
   void _showReceiptPreview(BuildContext context, Receipt receipt) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Container(
-          width: double.maxFinite,
-          height: MediaQuery.of(context).size.height * 0.8,
-          padding: const EdgeInsets.all(AppTheme.spacingM),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Receipt Preview', style: AppTheme.headingSmall),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const Divider(),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: ReceiptPreviewWidget(receipt: receipt),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    final provider = Provider.of<ReceiptProvider>(context, listen: false);
+    provider.loadReceipt(receipt);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ReceiptPreviewScreen()),
     );
   }
 
   Future<void> _shareReceipt(Receipt receipt) async {
     try {
       final exportService = ExportService();
-      await exportService.shareReceipt(receipt);
+      await exportService.exportToPDF(receipt);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Receipt shared successfully!'),
+            content: const Text('Receipt exported and shared successfully!'),
             backgroundColor: AppTheme.primaryColor,
           ),
         );
@@ -298,11 +430,11 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
   String _getStyleName(ReceiptStyle style) {
     switch (style) {
       case ReceiptStyle.bank:
-        return 'Bank';
+        return 'Classic';
       case ReceiptStyle.restaurant:
-        return 'Restaurant';
+        return 'Modern';
       case ReceiptStyle.retail:
-        return 'Retail';
+        return 'Simple';
       case ReceiptStyle.document:
         return 'Document';
     }

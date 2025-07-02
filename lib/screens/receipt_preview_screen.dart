@@ -4,6 +4,7 @@ import '../providers/receipt_provider.dart';
 import '../models/receipt.dart';
 import '../widgets/receipt_preview_widget.dart';
 import '../services/export_service.dart';
+import '../theme/app_theme.dart';
 
 class ReceiptPreviewScreen extends StatelessWidget {
   const ReceiptPreviewScreen({super.key});
@@ -28,9 +29,9 @@ class ReceiptPreviewScreen extends StatelessWidget {
                         await exportService.exportToPDF(provider.currentReceipt!);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('PDF exported successfully!'),
-                              backgroundColor: Colors.black,
+                            SnackBar(
+                              content: const Text('PDF exported successfully!'),
+                              backgroundColor: AppTheme.primaryColor,
                             ),
                           );
                         }
@@ -39,9 +40,9 @@ class ReceiptPreviewScreen extends StatelessWidget {
                         await exportService.exportToImage(provider.currentReceipt!);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Image exported successfully!'),
-                              backgroundColor: Colors.black,
+                            SnackBar(
+                              content: const Text('Image exported successfully!'),
+                              backgroundColor: AppTheme.primaryColor,
                             ),
                           );
                         }
@@ -208,11 +209,11 @@ class ReceiptPreviewScreen extends StatelessWidget {
   String _getStyleName(ReceiptStyle style) {
     switch (style) {
       case ReceiptStyle.bank:
-        return 'Bank Style';
+        return 'Classic Style';
       case ReceiptStyle.restaurant:
-        return 'Restaurant Style';
+        return 'Modern Style';
       case ReceiptStyle.retail:
-        return 'Retail Style';
+        return 'Simple Style';
       case ReceiptStyle.document:
         return 'Document Style';
     }

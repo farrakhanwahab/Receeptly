@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -25,7 +26,19 @@ class ExportService {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // Header
+                // Header with logo
+                if (receipt.logoPath != null) ...[
+                  pw.Center(
+                    child: pw.Image(
+                      pw.MemoryImage(
+                        File(receipt.logoPath!).readAsBytesSync(),
+                      ),
+                      width: 80,
+                      height: 80,
+                    ),
+                  ),
+                  pw.SizedBox(height: 8),
+                ],
                 pw.Center(
                   child: pw.Text(
                     receipt.merchantName,

@@ -230,8 +230,17 @@ class ReceiptProvider extends ChangeNotifier {
   }
 
   String _generateReceiptNumber() {
-    final now = DateTime.now();
-    return 'R${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${now.millisecondsSinceEpoch % 10000}';
+    // Try to get settings from the provider if available
+    try {
+      // This is a fallback method - the actual generation should be done in the creation screen
+      // where we have access to the SettingsProvider
+      final now = DateTime.now();
+      return 'R${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${now.millisecondsSinceEpoch % 10000}';
+    } catch (e) {
+      // Fallback to default format
+      final now = DateTime.now();
+      return 'R${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${now.millisecondsSinceEpoch % 10000}';
+    }
   }
 
   String formatCurrency(double amount) {
@@ -244,6 +253,66 @@ class ReceiptProvider extends ChangeNotifier {
         return '£${amount.toStringAsFixed(2)}';
       default:
         return '${amount.toStringAsFixed(2)} $_selectedCurrency';
+    }
+  }
+
+  // Save form data for persistence
+  Future<void> saveFormData({
+    String? recipientName,
+    String? recipientAddress,
+    String? recipientPhone,
+    String? recipientEmail,
+    String? receiptNumber,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final formData = {
+        'recipientName': recipientName ?? '',
+        'recipientAddress': recipientAddress ?? '',
+        'recipientPhone': recipientPhone ?? '',
+        'recipientEmail': recipientEmail ?? '',
+        'receiptNumber': receiptNumber ?? '',
+      };
+      await prefs.setString('formData', json.encode(formData));
+    } catch (e) {
+      debugPrint('Error saving form data: $e');
+    }
+  }
+
+  // Load form data for persistence
+  Future<Map<String, String>> loadFormData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final formDataJson = prefs.getString('formData');
+      if (formDataJson != null) {
+        final formData = json.decode(formDataJson) as Map<String, dynamic>;
+        return {
+          'recipientName': formData['recipientName'] ?? '',
+          'recipientAddress': formData['recipientAddress'] ?? '',
+          'recipientPhone': formData['recipientPhone'] ?? '',
+          'recipientEmail': formData['recipientEmail'] ?? '',
+          'receiptNumber': formData['receiptNumber'] ?? '',
+        };
+      }
+    } catch (e) {
+      debugPrint('Error loading form data: $e');
+    }
+    return {
+      'recipientName': '',
+      'recipientAddress': '',
+      'recipientPhone': '',
+      'recipientEmail': '',
+      'receiptNumber': '',
+    };
+  }
+
+  // Clear form data
+  Future<void> clearFormData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('formData');
+    } catch (e) {
+      debugPrint('Error clearing form data: $e');
     }
   }
 } 

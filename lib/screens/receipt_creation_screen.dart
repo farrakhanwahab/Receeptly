@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/receipt_provider.dart';
 import '../providers/settings_provider.dart';
-import '../models/receipt.dart';
-import '../models/receipt_item.dart';
-import '../widgets/merchant_info_form.dart';
 import '../widgets/items_form.dart';
 import '../widgets/receipt_style_selector.dart';
 import '../theme/app_theme.dart';
+import '../../main.dart';
+import 'receipt_preview_screen.dart';
 
 class ReceiptCreationScreen extends StatefulWidget {
   const ReceiptCreationScreen({super.key});
@@ -28,7 +27,51 @@ class _ReceiptCreationScreenState extends State<ReceiptCreationScreen> {
   final _receiptNumberController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedFormData();
+    _setupTextControllerListeners();
+  }
+
+  void _setupTextControllerListeners() {
+    _recipientNameController.addListener(_saveFormData);
+    _recipientAddressController.addListener(_saveFormData);
+    _recipientPhoneController.addListener(_saveFormData);
+    _recipientEmailController.addListener(_saveFormData);
+    _receiptNumberController.addListener(_saveFormData);
+  }
+
+  Future<void> _loadSavedFormData() async {
+    final provider = context.read<ReceiptProvider>();
+    final formData = await provider.loadFormData();
+    
+    setState(() {
+      _recipientNameController.text = formData['recipientName'] ?? '';
+      _recipientAddressController.text = formData['recipientAddress'] ?? '';
+      _recipientPhoneController.text = formData['recipientPhone'] ?? '';
+      _recipientEmailController.text = formData['recipientEmail'] ?? '';
+      _receiptNumberController.text = formData['receiptNumber'] ?? '';
+    });
+  }
+
+  void _saveFormData() {
+    final provider = context.read<ReceiptProvider>();
+    provider.saveFormData(
+      recipientName: _recipientNameController.text,
+      recipientAddress: _recipientAddressController.text,
+      recipientPhone: _recipientPhoneController.text,
+      recipientEmail: _recipientEmailController.text,
+      receiptNumber: _receiptNumberController.text,
+    );
+  }
+
+  @override
   void dispose() {
+    _recipientNameController.removeListener(_saveFormData);
+    _recipientAddressController.removeListener(_saveFormData);
+    _recipientPhoneController.removeListener(_saveFormData);
+    _recipientEmailController.removeListener(_saveFormData);
+    _receiptNumberController.removeListener(_saveFormData);
     _recipientNameController.dispose();
     _recipientAddressController.dispose();
     _recipientPhoneController.dispose();
@@ -44,6 +87,7 @@ class _ReceiptCreationScreenState extends State<ReceiptCreationScreen> {
     _recipientEmailController.clear();
     _receiptNumberController.clear();
     provider.clearCurrentReceipt();
+    provider.clearFormData();
     provider.initializeReceipt();
     setState(() {
       _currentStep = 0;
@@ -59,10 +103,8 @@ class _ReceiptCreationScreenState extends State<ReceiptCreationScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Set up receipt number if auto-generate is off
-        if (!settingsProvider.settings.autoGenerateReceiptNumber && _receiptNumberController.text.isEmpty) {
-          _receiptNumberController.text = '';
-        } else if (settingsProvider.settings.autoGenerateReceiptNumber && _receiptNumberController.text.isEmpty) {
+        // Set up receipt number using user's specified format
+        if (settingsProvider.settings.autoGenerateReceiptNumber && _receiptNumberController.text.isEmpty) {
           _receiptNumberController.text = settingsProvider.generateReceiptNumber();
         }
 
@@ -114,6 +156,15 @@ class _ReceiptCreationScreenState extends State<ReceiptCreationScreen> {
                           style: AppTheme.primaryButtonStyle,
                           onPressed: () async {
                             if (_formKey.currentState?.validate() ?? false) {
+                              // Set merchant info from settings
+                              final merchant = settingsProvider.settings;
+                              provider.updateMerchantInfo(
+                                name: merchant.merchantName,
+                                address: merchant.merchantAddress,
+                                phone: merchant.merchantPhone,
+                                email: merchant.merchantEmail,
+                              );
+                              provider.updateLogoPath(merchant.logoPath);
                               // Save recipient info to provider
                               provider.updateRecipientInfo(
                                 name: _recipientNameController.text,
@@ -125,23 +176,19 @@ class _ReceiptCreationScreenState extends State<ReceiptCreationScreen> {
                               provider.updateReceiptNumber(_receiptNumberController.text);
                               await provider.saveReceipt();
                               if (mounted) {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text('Receipt Generated', style: AppTheme.headingMedium),
-                                    content: Text(
-                                      'Your receipt has been saved and is available in Receipts.',
-                                      style: AppTheme.bodyMedium,
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('OK'),
-                                      ),
-                                    ],
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const ReceiptPreviewScreen(),
                                   ),
                                 );
-                                _clearForm(provider, settingsProvider);
+                                // After preview, navigate to receipts page, but do not clear the form
+                                final navState = MainNavigation.of(context);
+                                if (navState != null) {
+                                  navState.setState(() {
+                                    navState.selectedIndex = 1;
+                                  });
+                                }
                               }
                             }
                           },

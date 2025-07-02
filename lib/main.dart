@@ -45,10 +45,14 @@ class MainNavigation extends StatefulWidget {
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
+
+  static _MainNavigationState? of(BuildContext context) {
+    return context.findAncestorStateOfType<_MainNavigationState>();
+  }
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 0;
+  int selectedIndex = 0;
   static final List<Widget> _pages = <Widget>[
     ReceiptCreationScreen(),
     ReceiptHistoryScreen(),
@@ -57,16 +61,16 @@ class _MainNavigationState extends State<MainNavigation> {
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index;
+      selectedIndex = index;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: _pages[selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
+        currentIndex: selectedIndex,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.create), label: 'Create'),

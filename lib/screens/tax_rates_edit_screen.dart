@@ -58,6 +58,7 @@ class _TaxRatesEditScreenState extends State<TaxRatesEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Edit Tax Rates')),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(AppTheme.spacingM),
         child: Column(
@@ -111,9 +112,12 @@ class _TaxRatesEditScreenState extends State<TaxRatesEditScreen> {
             const SizedBox(height: AppTheme.spacingL),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _save,
-                child: const Text('Save'),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: ElevatedButton(
+                  onPressed: _save,
+                  child: const Text('Save'),
+                ),
               ),
             ),
           ],

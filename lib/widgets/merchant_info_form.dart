@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/receipt_provider.dart';
+import '../theme/app_theme.dart';
 
 class MerchantInfoForm extends StatefulWidget {
   const MerchantInfoForm({super.key});
@@ -57,7 +58,7 @@ class _MerchantInfoFormState extends State<MerchantInfoForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Logo uploaded successfully!'),
-            backgroundColor: Colors.black,
+            backgroundColor: AppTheme.primaryColor,
           ),
         );
       }
@@ -137,7 +138,7 @@ class _MerchantInfoFormState extends State<MerchantInfoForm> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
+                      border: Border.all(color: Theme.of(context).colorScheme.primary),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: ClipRRect(
