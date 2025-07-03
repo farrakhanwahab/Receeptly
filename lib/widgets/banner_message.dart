@@ -198,10 +198,15 @@ class _BannerContent extends StatelessWidget {
                   color: Colors.black,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon ?? Icons.brush,
-                  color: Colors.white,
-                  size: 28,
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset(
+                  'assets/images/app_icon.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    icon ?? Icons.brush,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),

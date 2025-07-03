@@ -6,6 +6,7 @@ import 'providers/settings_provider.dart';
 import 'screens/settings_screen.dart';
 import 'screens/receipt_creation_screen.dart';
 import 'screens/receipt_history_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +32,7 @@ class ReceiptGeneratorApp extends StatelessWidget {
           title: 'Receipt Generator',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.theme,
-          home: const MainNavigation(),
+          home: const SplashScreen(),
         );
       },
     );
