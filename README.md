@@ -2,6 +2,10 @@
 
 A simple mobile app for generating professional receipts with multiple layout styles. The app features a clean, modern light theme.
 
+## Screenshot
+
+![Receeptly App Screenshot](assets/images/app_screenshot.png)
+
 ## Features
 
 - **Multiple Receipt Styles**: Choose from Bank, Restaurant, Retail, or Document-style receipts
@@ -53,13 +57,3 @@ flutter run
 - **Modern**: Modern, itemized layout
 - **Simple**: Simple, till-style format
 - **Document**: Formal document/invoice style
-
-## Dependencies
-
-- `provider`: State management
-- `pdf`: PDF generation
-- `screenshot`: Image capture for export
-- `share_plus`: File sharing
-- `file_picker`: Logo upload functionality
-- `google_fonts`: Montserrat font integration
-- `intl`: Date and currency formatting
