@@ -79,53 +79,50 @@ class _ItemsFormState extends State<ItemsForm> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Edit Item'),
-        content: LayoutBuilder(
-          builder: (context, constraints) {
-            final maxHeight = MediaQuery.of(context).size.height * 0.6;
-            return ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: maxHeight),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Item Name'),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: quantityController,
-                      decoration: const InputDecoration(labelText: 'Quantity'),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: priceController,
-                      decoration: const InputDecoration(labelText: 'Price'),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: discountController,
-                      decoration: const InputDecoration(labelText: 'Discount'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ],
-                ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 400,
+            maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Item Name'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: quantityController,
+                    decoration: const InputDecoration(labelText: 'Quantity'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: priceController,
+                    decoration: const InputDecoration(labelText: 'Price'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: discountController,
+                    decoration: const InputDecoration(labelText: 'Discount'),
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
               ),
-            );
-          },
+            ),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () {
-              nameController.dispose();
-              quantityController.dispose();
-              priceController.dispose();
-              discountController.dispose();
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
             },
             child: const Text('Cancel'),
           ),
@@ -138,11 +135,7 @@ class _ItemsFormState extends State<ItemsForm> {
                 discount: double.tryParse(discountController.text) ?? 0.0,
               );
               context.read<ReceiptProvider>().updateItem(index, updatedItem);
-              nameController.dispose();
-              quantityController.dispose();
-              priceController.dispose();
-              discountController.dispose();
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
             },
             child: const Text('Update'),
           ),
