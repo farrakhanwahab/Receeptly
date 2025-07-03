@@ -8,7 +8,7 @@ A simple mobile app for generating professional receipts with multiple layout st
 
 ## Features
 
-- **Multiple Receipt Styles**: Choose from Bank, Restaurant, Retail, or Document-style receipts
+- **Multiple Receipt Styles**: Choose from 4 different receipt styles
 - **Live Preview**: See your receipt in real-time as you edit
 - **Export Options**: Save receipts as PDF or images
 - **Customization**: Add merchant information, items, tax rates, and currency options (all managed in Settings)
