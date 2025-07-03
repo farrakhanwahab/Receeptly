@@ -278,12 +278,22 @@ class ReceiptPreviewWidget extends StatelessWidget {
   }
 
   Widget _buildTotals() {
+    final taxes = receipt.taxes;
+    final hasMultipleTaxes = taxes.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         _buildTotalRow('Subtotal', receipt.subtotal),
         if (receipt.discount > 0) _buildTotalRow('Discount', receipt.discount),
-        if (receipt.taxAmount > 0) _buildTotalRow('Tax', receipt.taxAmount),
+        if (hasMultipleTaxes)
+          ...taxes.map((tax) => _buildTotalRow(
+                '${tax['name']} (${tax['rate']}%)',
+                tax['amount'] as double,
+              )),
+        if (hasMultipleTaxes && taxes.length > 1)
+          _buildTotalRow('Total Tax', taxes.fold(0.0, (sum, t) => sum + (t['amount'] as double))),
+        if (!hasMultipleTaxes && receipt.taxAmount > 0)
+          _buildTotalRow('Tax', receipt.taxAmount),
         if (receipt.vatAmount > 0) _buildTotalRow('VAT', receipt.vatAmount),
         if (receipt.otherAmount > 0) _buildTotalRow('Other', receipt.otherAmount),
         const Divider(),

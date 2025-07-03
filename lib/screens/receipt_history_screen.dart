@@ -6,6 +6,7 @@ import '../models/receipt.dart';
 import '../theme/app_theme.dart';
 import '../services/export_service.dart';
 import '../screens/receipt_preview_screen.dart';
+import '../widgets/banner_message.dart';
 
 class ReceiptHistoryScreen extends StatefulWidget {
   const ReceiptHistoryScreen({super.key});
@@ -48,39 +49,13 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
     });
   }
 
-  Future<void> _bulkExport() async {
-    if (_selectedReceiptIds.isEmpty) return;
-    
-    try {
-      final provider = context.read<ReceiptProvider>();
-      final selectedReceipts = provider.recentReceipts
-          .where((receipt) => _selectedReceiptIds.contains(receipt.id))
-          .toList();
-      
-      final exportService = ExportService();
-      for (final receipt in selectedReceipts) {
-        await exportService.exportToPDF(receipt);
-      }
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${selectedReceipts.length} receipts exported successfully!'),
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        );
-        _toggleSelectionMode();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error exporting receipts: $e'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
-      }
-    }
+  void _showBanner(String title, String subtitle, BannerMessageType type) {
+    BannerMessage.show(
+      context,
+      title: title,
+      subtitle: subtitle,
+      type: type,
+    );
   }
 
   Future<void> _bulkDelete() async {
@@ -120,22 +95,12 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
         }
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${selectedReceipts.length} receipts deleted'),
-              backgroundColor: AppTheme.primaryColor,
-            ),
-          );
+          _showBanner('Success', '${selectedReceipts.length} receipts deleted', BannerMessageType.success);
           _toggleSelectionMode();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error deleting receipts: $e'),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
+          _showBanner('Error', 'Error deleting receipts: $e', BannerMessageType.error);
         }
       }
     }
@@ -149,11 +114,6 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
         iconTheme: AppTheme.iconTheme,
         actions: [
           if (_isSelectionMode) ...[
-            IconButton(
-              icon: const Icon(Icons.file_download),
-              onPressed: _bulkExport,
-              tooltip: 'Export Selected',
-            ),
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: _bulkDelete,
@@ -279,10 +239,7 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
                               case 'view':
                                 _showReceiptPreview(context, receipt);
                                 break;
-                              case 'edit':
-                                provider.loadReceipt(receipt);
-                                // Navigate to creation screen
-                                break;
+
                               case 'share':
                                 await _shareReceipt(receipt);
                                 break;
@@ -302,16 +259,7 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
                                 ],
                               ),
                             ),
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.edit),
-                                  SizedBox(width: AppTheme.spacingS),
-                                  Text('Edit'),
-                                ],
-                              ),
-                            ),
+
                             const PopupMenuItem(
                               value: 'share',
                               child: Row(
@@ -358,23 +306,13 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
   Future<void> _shareReceipt(Receipt receipt) async {
     try {
       final exportService = ExportService();
-      await exportService.exportToPDF(receipt);
+      await exportService.shareReceipt(receipt);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Receipt exported and shared successfully!'),
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        );
+        _showBanner('Success', 'Receipt shared successfully!', BannerMessageType.success);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error sharing receipt: $e'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
+        _showBanner('Error', 'Error sharing receipt: $e', BannerMessageType.error);
       }
     }
   }
@@ -398,12 +336,7 @@ class _ReceiptHistoryScreenState extends State<ReceiptHistoryScreen> {
               await provider.deleteReceipt(receipt);
               if (mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Receipt deleted'),
-                    backgroundColor: AppTheme.primaryColor,
-                  ),
-                );
+                _showBanner('Success', 'Receipt deleted', BannerMessageType.success);
               }
             },
             style: AppTheme.dangerButtonStyle,

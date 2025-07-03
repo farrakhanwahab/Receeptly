@@ -15,7 +15,8 @@ class _CurrencyEditScreenState extends State<CurrencyEditScreen> {
   late String _selectedCurrency;
   late TextEditingController _noteController;
   BannerMessageType? _bannerType;
-  String? _bannerMessage;
+  String? _bannerTitle;
+  String? _bannerSubtitle;
 
   @override
   void initState() {
@@ -31,11 +32,13 @@ class _CurrencyEditScreenState extends State<CurrencyEditScreen> {
     super.dispose();
   }
 
-  void _showBanner(String message, BannerMessageType type) {
-    setState(() {
-      _bannerMessage = message;
-      _bannerType = type;
-    });
+  void _showBanner(String title, String subtitle, BannerMessageType type) {
+    BannerMessage.show(
+      context,
+      title: title,
+      subtitle: subtitle,
+      type: type,
+    );
   }
 
   @override
@@ -88,14 +91,14 @@ class _CurrencyEditScreenState extends State<CurrencyEditScreen> {
                                 await context.read<SettingsProvider>().updateCurrency(_selectedCurrency);
                                 await context.read<SettingsProvider>().updateDefaultNote(_noteController.text);
                                 if (mounted) {
-                                  _showBanner('Currency and note saved!', BannerMessageType.success);
+                                  _showBanner('Success', 'Currency and note saved!', BannerMessageType.success);
                                   Future.delayed(const Duration(seconds: 1), () {
                                     if (mounted) Navigator.pop(context);
                                   });
                                 }
                               } catch (e) {
                                 if (mounted) {
-                                  _showBanner('Error saving: $e', BannerMessageType.error);
+                                  _showBanner('Error', 'Error saving: $e', BannerMessageType.error);
                                 }
                               }
                             },
@@ -110,17 +113,6 @@ class _CurrencyEditScreenState extends State<CurrencyEditScreen> {
             ],
           ),
         ),
-        if (_bannerMessage != null && _bannerType != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: BannerMessage(
-              message: _bannerMessage!,
-              type: _bannerType!,
-              onClose: () => setState(() => _bannerMessage = null),
-            ),
-          ),
       ],
     );
   }

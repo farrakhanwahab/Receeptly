@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/banner_message.dart';
 
 class TaxRatesEditScreen extends StatefulWidget {
   const TaxRatesEditScreen({super.key});
@@ -33,6 +34,7 @@ class _TaxRatesEditScreenState extends State<TaxRatesEditScreen> {
         _nameController.clear();
         _rateController.clear();
       });
+      context.read<SettingsProvider>().updateTaxRatesList(_taxRates);
     }
   }
 
@@ -40,11 +42,28 @@ class _TaxRatesEditScreenState extends State<TaxRatesEditScreen> {
     setState(() {
       _taxRates.removeAt(index);
     });
+    context.read<SettingsProvider>().updateTaxRatesList(_taxRates);
   }
 
   void _save() async {
-    await context.read<SettingsProvider>().updateTaxRatesList(_taxRates);
-    if (mounted) Navigator.pop(context);
+    try {
+      final provider = context.read<SettingsProvider>();
+      await provider.updateTaxRatesList(_taxRates);
+      BannerMessage.show(
+        context,
+        title: 'Success',
+        subtitle: 'Tax rates saved!',
+        type: BannerMessageType.success,
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      BannerMessage.show(
+        context,
+        title: 'Error',
+        subtitle: 'Failed to save tax rates: $e',
+        type: BannerMessageType.error,
+      );
+    }
   }
 
   @override
@@ -57,7 +76,7 @@ class _TaxRatesEditScreenState extends State<TaxRatesEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Tax Rates')),
+      appBar: AppBar(title: Text('Edit Tax Rates', style: AppTheme.headingMedium)),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -72,14 +91,16 @@ class _TaxRatesEditScreenState extends State<TaxRatesEditScreen> {
                     flex: 2,
                     child: TextFormField(
                       controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Tax Name'),
+                      style: AppTheme.bodyMedium,
+                      decoration: InputDecoration(labelText: 'Tax Name', labelStyle: AppTheme.bodyMedium),
                     ),
                   ),
                   const SizedBox(width: AppTheme.spacingS),
                   Expanded(
                     child: TextFormField(
                       controller: _rateController,
-                      decoration: const InputDecoration(labelText: 'Rate (%)'),
+                      style: AppTheme.bodyMedium,
+                      decoration: InputDecoration(labelText: 'Rate (%)', labelStyle: AppTheme.bodyMedium),
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -98,8 +119,8 @@ class _TaxRatesEditScreenState extends State<TaxRatesEditScreen> {
                   final tax = _taxRates[index];
                   return Card(
                     child: ListTile(
-                      title: Text(tax['name']),
-                      subtitle: Text('${tax['rate']}%'),
+                      title: Text(tax['name'], style: AppTheme.bodyMedium),
+                      subtitle: Text('${tax['rate']}%', style: AppTheme.bodySmall),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () => _removeTaxRate(index),
@@ -116,7 +137,8 @@ class _TaxRatesEditScreenState extends State<TaxRatesEditScreen> {
                 padding: const EdgeInsets.only(bottom: 24.0),
                 child: ElevatedButton(
                   onPressed: _save,
-                  child: const Text('Save'),
+                  style: AppTheme.primaryButtonStyle,
+                  child: Text('Save', style: AppTheme.button),
                 ),
               ),
             ),

@@ -5,8 +5,8 @@ import '../providers/settings_provider.dart';
 import '../widgets/items_form.dart';
 import '../widgets/receipt_style_selector.dart';
 import '../theme/app_theme.dart';
-import '../../main.dart';
 import 'receipt_preview_screen.dart';
+import '../widgets/banner_message.dart';
 
 class ReceiptCreationScreen extends StatefulWidget {
   const ReceiptCreationScreen({super.key});
@@ -31,6 +31,18 @@ class _ReceiptCreationScreenState extends State<ReceiptCreationScreen> {
     super.initState();
     _loadSavedFormData();
     _setupTextControllerListeners();
+    // Ensure we're creating a new receipt with current settings
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<ReceiptProvider>();
+      final settingsProvider = context.read<SettingsProvider>();
+      provider.initializeReceipt();
+      // Set current tax rate and currency from settings
+      final firstTaxRate = settingsProvider.settings.taxRates.isNotEmpty 
+          ? settingsProvider.settings.taxRates.first['rate'] as double 
+          : settingsProvider.settings.taxRate;
+      provider.updateTaxRate(firstTaxRate);
+      provider.updateCurrency(settingsProvider.settings.currency);
+    });
   }
 
   void _setupTextControllerListeners() {
@@ -46,6 +58,7 @@ class _ReceiptCreationScreenState extends State<ReceiptCreationScreen> {
     final formData = await provider.loadFormData();
     
     setState(() {
+      // Always use saved form data for new receipts
       _recipientNameController.text = formData['recipientName'] ?? '';
       _recipientAddressController.text = formData['recipientAddress'] ?? '';
       _recipientPhoneController.text = formData['recipientPhone'] ?? '';
@@ -159,7 +172,7 @@ class _ReceiptCreationScreenState extends State<ReceiptCreationScreen> {
                               // Set merchant info from settings
                               final merchant = settingsProvider.settings;
                               provider.updateMerchantInfo(
-                                name: merchant.merchantName,
+                                name: merchant.merchantName.isNotEmpty ? merchant.merchantName : 'Your Business',
                                 address: merchant.merchantAddress,
                                 phone: merchant.merchantPhone,
                                 email: merchant.merchantEmail,
@@ -174,21 +187,33 @@ class _ReceiptCreationScreenState extends State<ReceiptCreationScreen> {
                               );
                               // Set receipt number
                               provider.updateReceiptNumber(_receiptNumberController.text);
-                              await provider.saveReceipt();
-                              if (mounted) {
-                                Navigator.push(
+                              // Update taxes from settings
+                              provider.updateTaxes(settingsProvider.settings.taxRates);
+                              try {
+                                await provider.saveReceipt();
+                                BannerMessage.show(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const ReceiptPreviewScreen(),
-                                  ),
+                                  title: 'Success',
+                                  subtitle: 'Receipt generated!',
+                                  type: BannerMessageType.success,
                                 );
-                                // After preview, navigate to receipts page, but do not clear the form
-                                final navState = MainNavigation.of(context);
-                                if (navState != null) {
-                                  navState.setState(() {
-                                    navState.selectedIndex = 1;
-                                  });
+                                if (mounted) {
+                                  // Navigate to preview screen first
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const ReceiptPreviewScreen(),
+                                    ),
+                                  );
+                                  // Clear the form after navigation (this will happen when user returns)
                                 }
+                              } catch (e) {
+                                BannerMessage.show(
+                                  context,
+                                  title: 'Error',
+                                  subtitle: 'Failed to generate receipt: $e',
+                                  type: BannerMessageType.error,
+                                );
                               }
                             }
                           },

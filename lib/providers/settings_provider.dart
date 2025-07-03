@@ -174,4 +174,15 @@ class SettingsProvider extends ChangeNotifier {
     await saveSettings();
     notifyListeners();
   }
+
+  Future<void> clearAllSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('settings');
+      _settings = Settings();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error clearing settings: $e');
+    }
+  }
 } 

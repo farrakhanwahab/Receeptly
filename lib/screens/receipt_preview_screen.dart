@@ -5,9 +5,24 @@ import '../models/receipt.dart';
 import '../widgets/receipt_preview_widget.dart';
 import '../services/export_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/banner_message.dart';
 
-class ReceiptPreviewScreen extends StatelessWidget {
+class ReceiptPreviewScreen extends StatefulWidget {
   const ReceiptPreviewScreen({super.key});
+
+  @override
+  State<ReceiptPreviewScreen> createState() => _ReceiptPreviewScreenState();
+}
+
+class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
+  void _showBanner(String title, String subtitle, BannerMessageType type) {
+    BannerMessage.show(
+      context,
+      title: title,
+      subtitle: subtitle,
+      type: type,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,23 +43,13 @@ class ReceiptPreviewScreen extends StatelessWidget {
                       case 'pdf':
                         await exportService.exportToPDF(provider.currentReceipt!);
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('PDF exported successfully!'),
-                              backgroundColor: AppTheme.primaryColor,
-                            ),
-                          );
+                          _showBanner('Success', 'PDF exported successfully!', BannerMessageType.success);
                         }
                         break;
                       case 'image':
                         await exportService.exportToImage(provider.currentReceipt!);
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Image exported successfully!'),
-                              backgroundColor: AppTheme.primaryColor,
-                            ),
-                          );
+                          _showBanner('Success', 'Image exported successfully!', BannerMessageType.success);
                         }
                         break;
                       case 'share':
@@ -53,12 +58,7 @@ class ReceiptPreviewScreen extends StatelessWidget {
                     }
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Export failed: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      _showBanner('Error', 'Export failed: $e', BannerMessageType.error);
                     }
                   }
                 },
@@ -106,79 +106,9 @@ class ReceiptPreviewScreen extends StatelessWidget {
       body: Consumer<ReceiptProvider>(
         builder: (context, provider, child) {
           if (provider.currentReceipt == null) {
-            return const Center(
-              child: Text('No receipt to preview'),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
-
-          if (provider.currentReceipt!.merchantName.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.receipt_long,
-                    size: 64,
-                    color: Colors.grey,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Complete the receipt details to see preview',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Receipt preview
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ReceiptPreviewWidget(receipt: provider.currentReceipt!),
-                ),
-                const SizedBox(height: 24),
-                
-                // Receipt info
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Receipt Information',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInfoRow('Receipt Number', provider.currentReceipt!.receiptNumber ?? 'N/A'),
-                        _buildInfoRow('Date', _formatDate(provider.currentReceipt!.date)),
-                        _buildInfoRow('Style', _getStyleName(provider.currentReceipt!.style)),
-                        _buildInfoRow('Currency', provider.currentReceipt!.currency),
-                        _buildInfoRow('Tax Rate', '${provider.currentReceipt!.taxRate}%'),
-                        _buildInfoRow('Items Count', provider.currentReceipt!.items.length.toString()),
-                        _buildInfoRow('Subtotal', provider.formatCurrency(provider.currentReceipt!.subtotal)),
-                        _buildInfoRow('Tax Amount', provider.formatCurrency(provider.currentReceipt!.taxAmount)),
-                        _buildInfoRow('Total', provider.formatCurrency(provider.currentReceipt!.total)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
+          return ReceiptPreviewWidget(receipt: provider.currentReceipt!);
         },
       ),
     );

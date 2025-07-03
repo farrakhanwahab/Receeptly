@@ -1,15 +1,16 @@
-# Receipt Generator
+# Receeptly - Receipt Generator
 
-A simple mobile app for generating receipts with multiple layout styles. The app features a clean black-and-white UI theme.
+A simple mobile app for generating professional receipts with multiple layout styles. The app features a clean, modern light theme.
 
 ## Features
 
 - **Multiple Receipt Styles**: Choose from Bank, Restaurant, Retail, or Document-style receipts
 - **Live Preview**: See your receipt in real-time as you edit
 - **Export Options**: Save receipts as PDF or images
-- **Customization**: Add merchant information, items, tax rates, and currency options
+- **Customization**: Add merchant information, items, tax rates, and currency options (all managed in Settings)
 - **Receipt History**: Save and manage your recent receipts
-- **Clean UI**: Black and white monochrome design with Montserrat font
+- **Clear All Data**: Easily reset all settings and receipts from the Settings page
+- **Modern UI**: Clean, light theme with Montserrat font
 
 ## Getting Started
 
@@ -24,8 +25,8 @@ A simple mobile app for generating receipts with multiple layout styles. The app
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd receipt_generator
+git clone https://github.com/farrakhanwahab/Receeptly
+cd Receeptly
 ```
 
 2. Install dependencies:
@@ -44,13 +45,14 @@ flutter run
 2. **Preview**: Switch to the preview tab to see your receipt in real-time
 3. **Export**: Use the menu options to export as PDF, image, or share
 4. **History**: View and manage your saved receipts
+5. **Settings**: Manage merchant info, tax rates, and currency. Use 'Clear All Data' to reset the app.
 
 ## Receipt Styles
 
-- **Bank Style**: Clean, professional layout suitable for financial transactions
-- **Restaurant Style**: Casual layout with itemized list, perfect for food service
-- **Retail Style**: Standard retail/till receipt format
-- **Document Style**: Formal document/invoice layout
+- **Classic**: Classic, professional layout
+- **Modern**: Modern, itemized layout
+- **Simple**: Simple, till-style format
+- **Document**: Formal document/invoice style
 
 ## Dependencies
 

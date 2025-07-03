@@ -9,6 +9,7 @@ import 'tax_rates_edit_screen.dart';
 import 'help_support_screen.dart';
 import '../widgets/banner_message.dart';
 import 'auto_generate_settings_screen.dart';
+import '../providers/receipt_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -27,7 +28,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _receiptPrefixController = TextEditingController();
   final _receiptNumberLengthController = TextEditingController();
   BannerMessageType? _bannerType;
-  String? _bannerMessage;
+  String? _bannerTitle;
+  String? _bannerSubtitle;
 
   @override
   void initState() {
@@ -62,9 +64,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
-  void _showBanner(String message, BannerMessageType type) {
+  void _showBanner(String title, String subtitle, BannerMessageType type) {
     setState(() {
-      _bannerMessage = message;
+      _bannerTitle = title;
+      _bannerSubtitle = subtitle;
       _bannerType = type;
     });
   }
@@ -80,12 +83,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final provider = context.read<SettingsProvider>();
         await provider.updateLogoPath(result.files.single.path);
         if (mounted) {
-          _showBanner('Logo uploaded successfully!', BannerMessageType.success);
+          _showBanner('Success', 'Logo uploaded successfully!', BannerMessageType.success);
         }
       }
     } catch (e) {
       if (mounted) {
-        _showBanner('Error uploading logo: $e', BannerMessageType.error);
+        _showBanner('Error', 'Error uploading logo: $e', BannerMessageType.error);
       }
     }
   }
@@ -169,6 +172,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: ListTile(
                             leading: const Icon(Icons.calculate),
                             title: Text('Tax Rates', style: AppTheme.bodyMedium),
+                            subtitle: settings.taxRates.isNotEmpty 
+                                ? Text('${settings.taxRates.length} tax rate(s) configured', style: AppTheme.bodySmall)
+                                : Text('No tax rates configured', style: AppTheme.bodySmall),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () => Navigator.push(
                               context,
@@ -227,21 +233,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             onTap: () => _showAboutDialog(context),
                           ),
                         ),
+                        const SizedBox(height: AppTheme.spacingXL),
+                        ElevatedButton(
+                          style: AppTheme.dangerButtonStyle,
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: Text('Clear All Data', style: AppTheme.headingMedium),
+                                content: Text('Are you sure you want to clear all settings and receipts? This cannot be undone.', style: AppTheme.bodyMedium),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    style: AppTheme.dangerButtonStyle,
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text('Clear'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed == true) {
+                              await context.read<SettingsProvider>().clearAllSettings();
+                              await context.read<ReceiptProvider>().clearAllReceipts();
+                              if (context.mounted) {
+                                BannerMessage.show(
+                                  context,
+                                  title: 'Success',
+                                  subtitle: 'All data cleared.',
+                                  type: BannerMessageType.success,
+                                );
+                                Navigator.of(context).popUntil((route) => route.isFirst);
+                              }
+                            }
+                          },
+                          child: const Text('Clear All Data'),
+                        ),
+                        const SizedBox(height: AppTheme.spacingXL),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            if (_bannerMessage != null && _bannerType != null)
+            if (_bannerTitle != null && _bannerSubtitle != null && _bannerType != null)
               Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
                 child: BannerMessage(
-                  message: _bannerMessage!,
+                  title: _bannerTitle!,
+                  subtitle: _bannerSubtitle!,
                   type: _bannerType!,
-                  onClose: () => setState(() => _bannerMessage = null),
+                  onClose: () => setState(() {
+                    _bannerTitle = null;
+                    _bannerSubtitle = null;
+                  }),
                 ),
               ),
           ],
@@ -269,8 +318,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: AppTheme.spacingM),
             Text('For support:', style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: AppTheme.spacingS),
-            Text('Email: support@receiptgenerator.com', style: AppTheme.bodySmall),
-            Text('Phone: +1-800-RECEIPT', style: AppTheme.bodySmall),
+            Text('Email: wahabfarrakhan@gmail.com', style: AppTheme.bodySmall),
+            Text('Phone: +233-500-428501', style: AppTheme.bodySmall),
           ],
         ),
         actions: [
@@ -293,13 +342,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             const Icon(Icons.receipt_long, size: 64, color: Colors.grey),
             const SizedBox(height: AppTheme.spacingM),
-            Text('Receipt Generator', style: AppTheme.headingSmall),
+            Text('Receeptly', style: AppTheme.headingSmall),
             const SizedBox(height: AppTheme.spacingS),
             Text('Version 1.0.0', style: AppTheme.bodySmall),
             const SizedBox(height: AppTheme.spacingS),
-            Text('A professional receipt generator app', style: AppTheme.bodySmall),
+            Text('A receipt generator app', style: AppTheme.bodySmall),
             const SizedBox(height: AppTheme.spacingM),
-            Text('© 2024 Receipt Generator', style: AppTheme.caption),
+            Text('© 2025 Farrakhan Wahab', style: AppTheme.caption),
           ],
         ),
         actions: [

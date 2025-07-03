@@ -315,4 +315,40 @@ class ReceiptProvider extends ChangeNotifier {
       debugPrint('Error clearing form data: $e');
     }
   }
+
+  Future<void> clearAllReceipts() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('receipts');
+      await prefs.remove('formData');
+      _recentReceipts = [];
+      clearCurrentReceipt();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error clearing receipts: $e');
+    }
+  }
+
+  void updateTaxes(List<Map<String, dynamic>> taxRates) {
+    if (_currentReceipt != null) {
+      final subtotal = _currentReceipt!.subtotal;
+      final taxes = taxRates.map((tax) {
+        final rate = (tax['rate'] as num?)?.toDouble() ?? 0.0;
+        final amount = subtotal * (rate / 100);
+        return {
+          'name': tax['name'] ?? '',
+          'rate': rate,
+          'amount': amount,
+        };
+      }).toList();
+      final totalTax = taxes.fold(0.0, (sum, t) => sum + (t['amount'] as double));
+      final total = subtotal + totalTax;
+      _currentReceipt = _currentReceipt!.copyWith(
+        taxes: taxes,
+        taxAmount: totalTax, // for backward compatibility
+        total: total,
+      );
+      notifyListeners();
+    }
+  }
 } 

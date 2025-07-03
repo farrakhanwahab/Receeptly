@@ -33,6 +33,7 @@ class Receipt {
   final String? receiptNumber;
   final ReceiptStyle style;
   final String? notes;
+  final List<Map<String, dynamic>> taxes;
 
   Receipt({
     required this.id,
@@ -60,6 +61,7 @@ class Receipt {
     this.receiptNumber,
     this.style = ReceiptStyle.retail,
     this.notes,
+    this.taxes = const [],
   });
 
   Map<String, dynamic> toJson() {
@@ -89,6 +91,7 @@ class Receipt {
       'receiptNumber': receiptNumber,
       'style': style.name,
       'notes': notes,
+      'taxes': taxes,
     };
   }
 
@@ -124,6 +127,7 @@ class Receipt {
         orElse: () => ReceiptStyle.retail,
       ),
       notes: json['notes'],
+      taxes: (json['taxes'] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [],
     );
   }
 
@@ -153,6 +157,7 @@ class Receipt {
     String? receiptNumber,
     ReceiptStyle? style,
     String? notes,
+    List<Map<String, dynamic>>? taxes,
   }) {
     return Receipt(
       id: id ?? this.id,
@@ -180,6 +185,7 @@ class Receipt {
       receiptNumber: receiptNumber ?? this.receiptNumber,
       style: style ?? this.style,
       notes: notes ?? this.notes,
+      taxes: taxes ?? this.taxes,
     );
   }
 } 

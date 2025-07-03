@@ -1,4 +1,4 @@
-name: receipt_generator
+name: Receeptly
 description: "A professional receipt generator app with multiple layout styles."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

@@ -30,9 +30,7 @@ class ReceiptGeneratorApp extends StatelessWidget {
         return MaterialApp(
           title: 'Receipt Generator',
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: settingsProvider.settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          theme: AppTheme.theme,
           home: const MainNavigation(),
         );
       },

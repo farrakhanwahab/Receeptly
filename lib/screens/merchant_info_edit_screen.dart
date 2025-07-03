@@ -20,7 +20,8 @@ class _MerchantInfoEditScreenState extends State<MerchantInfoEditScreen> {
   late TextEditingController _emailController;
   late TextEditingController _notesController;
   BannerMessageType? _bannerType;
-  String? _bannerMessage;
+  String? _bannerTitle;
+  String? _bannerSubtitle;
 
   @override
   void initState() {
@@ -43,11 +44,13 @@ class _MerchantInfoEditScreenState extends State<MerchantInfoEditScreen> {
     super.dispose();
   }
 
-  void _showBanner(String message, BannerMessageType type) {
-    setState(() {
-      _bannerMessage = message;
-      _bannerType = type;
-    });
+  void _showBanner(String title, String subtitle, BannerMessageType type) {
+    BannerMessage.show(
+      context,
+      title: title,
+      subtitle: subtitle,
+      type: type,
+    );
   }
 
   @override
@@ -92,12 +95,12 @@ class _MerchantInfoEditScreenState extends State<MerchantInfoEditScreen> {
                                             if (result != null) {
                                               await provider.updateLogoPath(result.files.single.path);
                                               if (context.mounted) {
-                                                _showBanner('Logo uploaded successfully!', BannerMessageType.success);
+                                                _showBanner('Success', 'Logo uploaded successfully!', BannerMessageType.success);
                                               }
                                             }
                                           } catch (e) {
                                             if (context.mounted) {
-                                              _showBanner('Error uploading logo: $e', BannerMessageType.error);
+                                              _showBanner('Error', 'Error uploading logo: $e', BannerMessageType.error);
                                             }
                                           }
                                         },
@@ -163,14 +166,14 @@ class _MerchantInfoEditScreenState extends State<MerchantInfoEditScreen> {
                                       notes: _notesController.text,
                                     );
                                     if (mounted) {
-                                      _showBanner('Merchant info saved!', BannerMessageType.success);
+                                      _showBanner('Success', 'Merchant info saved!', BannerMessageType.success);
                                       Future.delayed(const Duration(seconds: 1), () {
                                         if (mounted) Navigator.pop(context);
                                       });
                                     }
                                   } catch (e) {
                                     if (mounted) {
-                                      _showBanner('Error saving info: $e', BannerMessageType.error);
+                                      _showBanner('Error', 'Error saving info: $e', BannerMessageType.error);
                                     }
                                   }
                                 }
@@ -187,17 +190,6 @@ class _MerchantInfoEditScreenState extends State<MerchantInfoEditScreen> {
             ],
           ),
         ),
-        if (_bannerMessage != null && _bannerType != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: BannerMessage(
-              message: _bannerMessage!,
-              type: _bannerType!,
-              onClose: () => setState(() => _bannerMessage = null),
-            ),
-          ),
       ],
     );
   }

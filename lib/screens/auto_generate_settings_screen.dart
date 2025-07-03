@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/banner_message.dart';
 
 class AutoGenerateSettingsScreen extends StatefulWidget {
   const AutoGenerateSettingsScreen({super.key});
@@ -43,6 +44,27 @@ class _AutoGenerateSettingsScreenState extends State<AutoGenerateSettingsScreen>
     if (mounted) Navigator.pop(context);
   }
 
+  void _toggleAutoGenerate(bool value) async {
+    try {
+      final provider = context.read<SettingsProvider>();
+      await provider.updateReceiptNumberSettings(autoGenerate: value);
+      setState(() => _autoGenerate = value);
+      BannerMessage.show(
+        context,
+        title: 'Success',
+        subtitle: value ? 'Auto-generate enabled!' : 'Auto-generate disabled!',
+        type: BannerMessageType.success,
+      );
+    } catch (e) {
+      BannerMessage.show(
+        context,
+        title: 'Error',
+        subtitle: 'Failed to update setting: $e',
+        type: BannerMessageType.error,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,9 +80,7 @@ class _AutoGenerateSettingsScreenState extends State<AutoGenerateSettingsScreen>
                 Text('Enable Auto-generate', style: AppTheme.bodyMedium),
                 Switch(
                   value: _autoGenerate,
-                  onChanged: (value) {
-                    setState(() => _autoGenerate = value);
-                  },
+                  onChanged: _toggleAutoGenerate,
                 ),
               ],
             ),
